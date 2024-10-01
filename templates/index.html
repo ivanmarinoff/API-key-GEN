@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+        h2 {
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>API Key Generator</h2>
+
+        <div>
+            <button class="btn" id="fetch-key-btn">Fetch Current API Key</button>
+        </div>
+
+        <div class="result" id="current-key">
+            <p><strong>Current API Key:</strong> <span id="key-value">No key fetched yet</span></p>
+        </div>
+
+        <hr>
+
+        <h3>Validate an API Key</h3>
+        <div class="input-group">
+            <label for="key-input">Enter API Key:</label>
+            <input type="text" id="key-input" placeholder="Paste your API key here">
+        </div>
+        <button class="btn" id="validate-key-btn">Validate Key</button>
+
+        <div class="result" id="validation-result">
+            <p id="validation-message">Validation result will be shown here</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('fetch-key-btn').addEventListener('click', function() {
+            fetch('/api/get-key/')
+                .then(response => {
+                    if (response.status === 404) {
+                        document.getElementById('key-value').innerHTML = "No active key available (404)";
+                    } else if (response.ok) {
+                        return response.json();
+                    } else {
+                        document.getElementById('key-value').innerHTML = "Error fetching key.";
+                    }
+                })
+                .then(data => {
+                    if (data) {
+                        document.getElementById('key-value').innerHTML = data.key;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('key-value').innerHTML = "Error fetching key.";
+                });
+        });
+
+        document.getElementById('validate-key-btn').addEventListener('click', function() {
+            const key = document.getElementById('key-input').value;
+
+            fetch('/api/validate-key/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ key: key }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.detail === "Key validated") {
+                        document.getElementById('validation-message').innerHTML = "Key is valid!";
+                        document.getElementById('validation-message').style.color = "green";
+                    } else {
+                        document.getElementById('validation-message').innerHTML = "Invalid or expired key.";
+                        document.getElementById('validation-message').style.color = "red";
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('validation-message').innerHTML = "Error validating key.";
+                });
+        });
+    </script>
+</body>
+</html>
