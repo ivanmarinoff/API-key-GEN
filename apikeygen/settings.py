@@ -101,12 +101,14 @@ DATABASES = {
 
 CORS_ALLOWED_ORIGINS = [
     "https://api-key-gen.onrender.com",
+    "https://personal-wallet.onrender.com"
     "http://127.0.0.1:8000",
     "http://localhost:8000",
 ]
 
 CORS_ORIGIN_WHITELIST = (
        'https://api-key-gen.onrender.com',
+       'https://personal-wallet.onrender.com',
        'http://127.0.0.1:8000',
        'http://localhost:8000',
 )
