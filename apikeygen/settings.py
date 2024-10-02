@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 from apikeygen import keygen
+from corsheaders.defaults import default_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -51,11 +52,13 @@ INSTALLED_APPS = [
     # 'apikeygen.keygen.apps.KeygenConfig',
     'rest_framework',
     'apikeygen.keygen',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -94,6 +97,35 @@ DATABASES = {
         "NAME": BASE_DIR / "db.sqlite3",
     }
 }
+
+
+CORS_ALLOWED_ORIGINS = [
+    "https://api-key-gen.onrender.com",
+    "http://127.0.0.1:8000",
+    "http://localhost:8000",
+]
+
+CORS_ORIGIN_WHITELIST = (
+       'https://api-key-gen.onrender.com',
+       'http://127.0.0.1:8000',
+       'http://localhost:8000',
+)
+
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+)
+
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "DELETE",
+    "PATCH",
+    "OPTIONS",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
 
 
 # Password validation
