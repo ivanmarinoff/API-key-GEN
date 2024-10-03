@@ -3,125 +3,330 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Key Generator</title>
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>API Key Validator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
+
         .container {
             max-width: 600px;
             margin: auto;
         }
-        h2 {
+
+        h2, h3 {
             text-align: center;
         }
+
         .input-group {
             margin-bottom: 15px;
         }
+
         .input-group label {
             display: block;
             margin-bottom: 5px;
         }
+
         .input-group input {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
         }
+
         .btn {
             background-color: #007BFF;
             color: white;
             padding: 10px;
             border: none;
             cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
         }
+
         .btn:hover {
             background-color: #0056b3;
         }
-        .result {
+
+        .result, .validation-result {
             margin-top: 20px;
             padding: 10px;
             border: 1px solid #ddd;
+            text-align: center;
         }
+
         .error {
             color: red;
+        }
+
+        .success {
+            color: green;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>API Key Generator</h2>
+<div class="container">
+    <h2>API Key Validator</h2>
 
-        <div>
-            <button class="btn" id="fetch-key-btn">Fetch Current API Key</button>
-        </div>
-
-        <div class="result" id="current-key">
-            <p><strong>Current API Key:</strong> <span id="key-value">No key fetched yet</span></p>
-        </div>
-
-        <hr>
-
-        <h3>Validate an API Key</h3>
-        <div class="input-group">
-            <label for="key-input">Enter API Key:</label>
-            <input type="text" id="key-input" placeholder="Paste your API key here">
-        </div>
-        <button class="btn" id="validate-key-btn">Validate Key</button>
-
-        <div class="result" id="validation-result">
-            <p id="validation-message">Validation result will be shown here</p>
-        </div>
+    <div class="input-group">
+        <label for="site-url-input">Enter Site URL:</label>
+        <input type="text" id="site-url-input" placeholder="e.g., https://your-site.com">
     </div>
 
-    <script>
-        document.getElementById('fetch-key-btn').addEventListener('click', function() {
-            fetch('/api/get-key/')
-                .then(response => {
-                    if (response.status === 404) {
-                        document.getElementById('key-value').innerHTML = "No active key available (404)";
-                    } else if (response.ok) {
-                        return response.json();
-                    } else {
-                        document.getElementById('key-value').innerHTML = "Error fetching key.";
-                    }
-                })
-                .then(data => {
-                    if (data) {
-                        document.getElementById('key-value').innerHTML = data.key;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+    <button class="btn" id="fetch-key-btn">Fetch API Key and Validate</button>
+
+    <div class="result" id="current-key">
+        <p><strong>Fetched API Key:</strong> <span id="key-value">No key fetched yet</span></p>
+        <p><strong>Key Expiration:</strong> <span id="key-expiration">N/A</span></p>
+    </div>
+
+    <hr>
+
+    <div class="validation-result" id="validation-result">
+        <p id="validation-message">Validation status will be displayed here</p>
+    </div>
+</div>
+
+<script>
+    document.getElementById('fetch-key-btn').addEventListener('click', function () {
+        const siteUrl = document.getElementById('site-url-input').value;
+        if (!siteUrl) {
+            document.getElementById('validation-message').innerHTML = "Please enter a valid site URL.";
+            document.getElementById('validation-message').style.color = "red";
+            return;
+        }
+
+        // Fetch API key for the entered site URL
+        fetch(`/api/get-key/?site_url=${encodeURIComponent(siteUrl)}`)
+            .then(response => {
+                if (response.status === 404) {
+                    document.getElementById('key-value').innerHTML = "No active key available (404)";
+                    document.getElementById('validation-message').innerHTML = "Invalid site URL or key not found.";
+                    document.getElementById('validation-message').style.color = "red";
+                } else if (response.ok) {
+                    return response.json();
+                } else {
                     document.getElementById('key-value').innerHTML = "Error fetching key.";
-                });
-        });
-
-        document.getElementById('validate-key-btn').addEventListener('click', function() {
-            const key = document.getElementById('key-input').value;
-
-            fetch('/api/validate-key/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ key: key }),
+                    document.getElementById('validation-message').innerHTML = "Error fetching the key.";
+                    document.getElementById('validation-message').style.color = "red";
+                }
             })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.detail === "Key validated") {
-                        document.getElementById('validation-message').innerHTML = "Key is valid!";
-                        document.getElementById('validation-message').style.color = "green";
-                    } else {
-                        document.getElementById('validation-message').innerHTML = "Invalid or expired key.";
-                        document.getElementById('validation-message').style.color = "red";
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    document.getElementById('validation-message').innerHTML = "Error validating key.";
-                });
-        });
-    </script>
+            .then(data => {
+                if (data && data.key) {
+                    // Display fetched key and validate it
+                    document.getElementById('key-value').innerHTML = data.key;
+                    document.getElementById('key-expiration').innerHTML = data.expires_at || "N/A";  // Show expiration date
+
+                    // Validate the key with the same site URL
+                    validateKey(data.key, siteUrl);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('key-value').innerHTML = "Error fetching key.";
+                document.getElementById('validation-message').innerHTML = "Error fetching the key.";
+                document.getElementById('validation-message').style.color = "red";
+            });
+    });
+
+    function validateKey(key, siteUrl) {
+        fetch('/api/validate-key/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')  // Assuming you have CSRF protection enabled
+            },
+            body: JSON.stringify({key: key, site_url: siteUrl}),
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.detail === "Key validated") {
+                    document.getElementById('validation-message').innerHTML = `Key is valid! Expires at: ${data.expires_at}`;
+                    document.getElementById('validation-message').style.color = "green";
+                } else {
+                    document.getElementById('validation-message').innerHTML = "Invalid or expired key.";
+                    document.getElementById('validation-message').style.color = "red";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('validation-message').innerHTML = "Error validating key.";
+                document.getElementById('validation-message').style.color = "red";
+            });
+    }
+
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
 </body>
 </html>
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <meta name="csrf-token" content="{{ csrf_token }}">-->
+
+<!--    <title>API Key Generator</title>-->
+<!--    <style>-->
+<!--        body {-->
+<!--            font-family: Arial, sans-serif;-->
+<!--            margin: 20px;-->
+<!--        }-->
+<!--        .container {-->
+<!--            max-width: 600px;-->
+<!--            margin: auto;-->
+<!--        }-->
+<!--        h2 {-->
+<!--            text-align: center;-->
+<!--        }-->
+<!--        .input-group {-->
+<!--            margin-bottom: 15px;-->
+<!--        }-->
+<!--        .input-group label {-->
+<!--            display: block;-->
+<!--            margin-bottom: 5px;-->
+<!--        }-->
+<!--        .input-group input {-->
+<!--            width: 100%;-->
+<!--            padding: 8px;-->
+<!--            box-sizing: border-box;-->
+<!--        }-->
+<!--        .btn {-->
+<!--            background-color: #007BFF;-->
+<!--            color: white;-->
+<!--            padding: 10px;-->
+<!--            border: none;-->
+<!--            cursor: pointer;-->
+<!--        }-->
+<!--        .btn:hover {-->
+<!--            background-color: #0056b3;-->
+<!--        }-->
+<!--        .result {-->
+<!--            margin-top: 20px;-->
+<!--            padding: 10px;-->
+<!--            border: 1px solid #ddd;-->
+<!--        }-->
+<!--        .error {-->
+<!--            color: red;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <div class="container">-->
+<!--        <h2>API Key Generator</h2>-->
+
+<!--        <div class="input-group">-->
+<!--            <label for="site-url-input">Enter Site URL:</label>-->
+<!--            <input type="text" id="site-url-input" placeholder="Enter your site URL">-->
+<!--        </div>-->
+
+<!--        <div>-->
+<!--            <button class="btn" id="fetch-key-btn">Fetch Current API Key</button>-->
+<!--        </div>-->
+
+<!--        <div class="result" id="current-key">-->
+<!--            <p><strong>Current API Key:</strong> <span id="key-value">No key fetched yet</span></p>-->
+<!--        </div>-->
+
+<!--        <hr>-->
+
+<!--        <h3>Validate an API Key</h3>-->
+<!--        <div class="input-group">-->
+<!--            <label for="key-input">Enter API Key:</label>-->
+<!--            <input type="text" id="key-input" placeholder="Paste your API key here">-->
+<!--        </div>-->
+<!--        <button class="btn" id="validate-key-btn">Validate Key</button>-->
+
+<!--        <div class="result" id="validation-result">-->
+<!--            <p id="validation-message">Validation result will be shown here</p>-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <script>-->
+<!--        document.getElementById('fetch-key-btn').addEventListener('click', function() {-->
+<!--            // Get the site URL from user input-->
+<!--            const siteUrl = document.getElementById('site-url-input').value.trim();-->
+
+<!--            if (!siteUrl) {-->
+<!--                alert('Please enter a valid site URL');-->
+<!--                return;-->
+<!--            }-->
+
+<!--            // Fetch the API key for the provided site URL-->
+<!--            fetch(`/api/get-key/?site_url=${encodeURIComponent(siteUrl)}`)-->
+<!--                .then(response => {-->
+<!--                    if (response.status === 403) {-->
+<!--                        document.getElementById('key-value').innerHTML = "Key expired (403)";-->
+<!--                    } else if (response.status === 404) {-->
+<!--                        document.getElementById('key-value').innerHTML = "No active key available (404)";-->
+<!--                    } else if (response.ok) {-->
+<!--                        return response.json();-->
+<!--                    } else {-->
+<!--                        document.getElementById('key-value').innerHTML = "Error fetching key.";-->
+<!--                    }-->
+<!--                })-->
+<!--                .then(data => {-->
+<!--                    if (data && data.key) {-->
+<!--                        document.getElementById('key-value').innerHTML = data.key;-->
+<!--                    }-->
+<!--                })-->
+<!--                .catch(error => {-->
+<!--                    console.error('Error:', error);-->
+<!--                    document.getElementById('key-value').innerHTML = "Error fetching key.";-->
+<!--                });-->
+<!--        });-->
+
+<!--        document.getElementById('validate-key-btn').addEventListener('click', function () {-->
+<!--    const key = document.getElementById('key-input').value.trim();-->
+<!--    const siteUrl = document.getElementById('site-url-input').value.trim();-->
+
+<!--    if (!key || !siteUrl) {-->
+<!--        alert('Please enter both the API key and the site URL.');-->
+<!--        return;-->
+<!--    }-->
+
+<!--    // Get the CSRF token from the meta tag (or use the hidden input approach)-->
+<!--    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');-->
+
+<!--    fetch('/api/validate-key/', {-->
+<!--        method: 'POST',-->
+<!--        headers: {-->
+<!--            'Content-Type': 'application/json',-->
+<!--            'X-CSRFToken': csrfToken,  // Include CSRF token in the request headers-->
+<!--        },-->
+<!--        body: JSON.stringify({ key: key, site_url: siteUrl }),-->
+<!--    })-->
+<!--        .then(response => response.json())-->
+<!--        .then(data => {-->
+<!--            if (data.detail === "Key validated") {-->
+<!--                document.getElementById('validation-message').innerHTML = "Key is valid!";-->
+<!--                document.getElementById('validation-message').style.color = "green";-->
+<!--            } else {-->
+<!--                document.getElementById('validation-message').innerHTML = "Invalid or expired key.";-->
+<!--                document.getElementById('validation-message').style.color = "red";-->
+<!--            }-->
+<!--        })-->
+<!--        .catch(error => {-->
+<!--            console.error('Error:', error);-->
+<!--            document.getElementById('validation-message').innerHTML = "Error validating key.";-->
+<!--        });-->
+<!--});-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->
