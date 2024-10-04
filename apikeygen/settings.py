@@ -18,7 +18,6 @@ from corsheaders.defaults import default_headers
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -39,17 +38,16 @@ if RENDER_EXTERNAL_HOSTNAME:
 
 CSRF_TRUSTED_ORIGINS = [f'http://{x}:80' for x in os.environ.get('ALLOWED_HOSTS', '').split(' ')]
 
-
 # Application definition
 
 INSTALLED_APPS = [
+    # "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # 'apikeygen.keygen.apps.KeygenConfig',
     'rest_framework',
     'apikeygen.keygen',
     'corsheaders',
@@ -87,7 +85,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "apikeygen.wsgi.application"
 
-
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
@@ -98,21 +95,19 @@ DATABASES = {
     }
 }
 
-
 CORS_ALLOWED_ORIGINS = [
-    "https://api-key-gen.onrender.com",
-    "https://personal-wallet.onrender.com",
-    "http://127.0.0.1:8000",
-    "http://localhost:8000",
+    'https://personal-wallet.onrender.com',
+    # "http://127.0.0.2:3000",
+    # "http://localhost:3000",
 ]
 
 CORS_ORIGIN_WHITELIST = (
-       'https://api-key-gen.onrender.com',
-       'https://personal-wallet.onrender.com',
-       'http://127.0.0.1:8000',
-       'http://localhost:8000',
+    # 'https://api-key-gen.onrender.com',
+    'https://personal-wallet.onrender.com',
+    # "http://127.0.0.2",  # Frontend origin
+    # "http://localhost",  # Include localhost as well for local development
 )
-
+CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = (
     *default_headers,
 )
@@ -127,8 +122,6 @@ CORS_ALLOW_METHODS = [
 ]
 
 CORS_ALLOW_CREDENTIALS = True
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -148,7 +141,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
@@ -159,7 +151,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

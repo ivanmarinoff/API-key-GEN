@@ -1,76 +1,77 @@
-# from django.shortcuts import render
-# from rest_framework.response import Response
-# from rest_framework.views import APIView
-# from .models import APIKey
-# from django.utils import timezone
-# from rest_framework import status
-
-
-from django.http import JsonResponse
-from django.views import View
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import status
 from django.shortcuts import render, get_object_or_404
 from django.utils import timezone
 from .models import APIKey
-import json
 
 
 def index(request):
     """Landing page view to render a basic HTML page."""
-    return render(request, 'index.html')  # Make sure 'index.html' exists in your templates directory
+    return render(request, 'index.html')  # Ensure 'index.html' exists in your templates directory
 
 
-class KeyView(View):
+class KeyView(APIView):
     """View to handle GET requests for retrieving API keys based on the site URL."""
 
-    def get(self, request, *args, **kwargs):
+    @staticmethod
+    def get(request):
         # Assume the site URL is passed as a GET parameter
         site_url = request.GET.get('site_url')
         if not site_url:
-            return JsonResponse({'error': 'site_url parameter is missing'}, status=400)
+            return Response({'error': 'site_url parameter is missing'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Look up the key for the given site
-        key_obj = get_object_or_404(APIKey, site_url=site_url)
+        # Look up the key for the given site URL and check if it's still valid
+        key_obj = APIKey.objects.filter(site_url=site_url, expires_at__gt=timezone.now()).first()
 
-        # Check if the key is still valid
-        if key_obj.expires_at > timezone.now():
-            return JsonResponse({
+        if key_obj:
+            # If the key is found and still valid, return it
+            return Response({
                 'key': key_obj.key,
-                'expires_at': key_obj.expires_at.strftime('%Y-%m-%d %H:%M:%S')  # Include expiration date in response
+                'expires_at': key_obj.expires_at.strftime('%Y-%m-%d %H:%M:%S')
             })
         else:
-            return JsonResponse({'error': 'Key expired'}, status=403)
+            return Response({'error': 'No valid key found for the given site URL'}, status=status.HTTP_404_NOT_FOUND)
 
 
-class ValidateKeyView(View):
+class ValidateKeyView(APIView):
     """View to handle POST requests for validating API keys with a specific site URL."""
 
-    def post(self, request, *args, **kwargs):
-        # Parse the request body to get the key and site URL
-        try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON payload'}, status=400)
-
-        key = data.get('key')
-        site_url = data.get('site_url')
+    @staticmethod
+    def post(request):
+        # Retrieve the key and site URL from the request data
+        key = request.data.get('key')
+        site_url = request.data.get('site_url')
 
         # Check if both key and site_url are provided
         if not key or not site_url:
-            return JsonResponse({'error': 'Both "key" and "site_url" are required'}, status=400)
+            return Response({'error': 'Both "key" and "site_url" are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check for the corresponding API key and site URL
         key_obj = get_object_or_404(APIKey, key=key, site_url=site_url)
 
         # Validate if the key is still valid for the given site
         if key_obj.expires_at > timezone.now():
-            return JsonResponse({
+            return Response({
                 'detail': 'Key validated',
-                'expires_at': key_obj.expires_at.strftime('%Y-%m-%d %H:%M:%S')  # Include expiration date in response
+                'expires_at': key_obj.expires_at.strftime('%Y-%m-%d %H:%M:%S')
             })
         else:
-            return JsonResponse({'detail': 'Key expired or invalid'}, status=403)
+            return Response({'detail': 'Key expired or invalid'}, status=status.HTTP_403_FORBIDDEN)
 
 
+
+# from rest_framework.response import Response
+# from rest_framework.views import APIView
+# from rest_framework import status
+# from django.shortcuts import render
+# from django.utils import timezone
+# from .models import APIKey
+#
+#
+#
+#
+#
 # def index(request):
 #     return render(request, '../templates/index.html')
 #

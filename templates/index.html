@@ -90,7 +90,8 @@
 
 <script>
     document.getElementById('fetch-key-btn').addEventListener('click', function () {
-        const siteUrl = document.getElementById('site-url-input').value;
+        const siteUrl = document.getElementById('site-url-input').value.trim();
+
         if (!siteUrl) {
             document.getElementById('validation-message').innerHTML = "Please enter a valid site URL.";
             document.getElementById('validation-message').style.color = "red";
@@ -101,17 +102,21 @@
         fetch(`/api/get-key/?site_url=${encodeURIComponent(siteUrl)}`)
             .then(response => {
                 if (response.status === 404) {
+                    // Handle 404 error
                     document.getElementById('key-value').innerHTML = "No active key available (404)";
                     document.getElementById('validation-message').innerHTML = "Invalid site URL or key not found.";
                     document.getElementById('validation-message').style.color = "red";
+                    throw new Error("Key not found");
                 } else if (response.ok) {
-                    return response.json();
+                    return response.json(); // Parse JSON if the response is OK
                 } else {
                     document.getElementById('key-value').innerHTML = "Error fetching key.";
-                    document.getElementById('validation-message').innerHTML = "Error fetching the key.";
+                    document.getElementById('validation-message').innerHTML = "Unexpected error fetching the key.";
                     document.getElementById('validation-message').style.color = "red";
+                    throw new Error("Unexpected error fetching the key");
                 }
             })
+
             .then(data => {
                 if (data && data.key) {
                     // Display fetched key and validate it
@@ -131,15 +136,23 @@
     });
 
     function validateKey(key, siteUrl) {
+        const csrfToken = getCookie('csrftoken');  // Ensure CSRF token is retrieved correctly
+
         fetch('/api/validate-key/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCookie('csrftoken')  // Assuming you have CSRF protection enabled
+                'X-CSRFToken': csrfToken  // Include CSRF token in the request headers
             },
             body: JSON.stringify({key: key, site_url: siteUrl}),
         })
-            .then(response => response.json())
+            .then(response => {
+                if (response.ok) {
+                    return response.json();
+                } else {
+                    throw new Error("Error validating key");
+                }
+            })
             .then(data => {
                 if (data.detail === "Key validated") {
                     document.getElementById('validation-message').innerHTML = `Key is valid! Expires at: ${data.expires_at}`;
@@ -156,7 +169,7 @@
             });
     }
 
-
+    // Helper function to retrieve CSRF token
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -171,6 +184,7 @@
         }
         return cookieValue;
     }
+
 </script>
 </body>
 </html>
