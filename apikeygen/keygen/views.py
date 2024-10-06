@@ -12,26 +12,23 @@ def index(request):
 
 
 class KeyView(APIView):
-    """View to handle GET requests for retrieving API keys based on the site URL."""
+    """View to handle GET requests for retrieving the latest active API key."""
 
     @staticmethod
     def get(request):
-        # Assume the site URL is passed as a GET parameter
-        site_url = request.GET.get('site_url')
-        if not site_url:
-            return Response({'error': 'site_url parameter is missing'}, status=status.HTTP_400_BAD_REQUEST)
+        # Remove expired keys before retrieving the latest one
+        APIKey.objects.filter(expires_at__lt=timezone.now()).delete()
 
-        # Look up the key for the given site URL and check if it's still valid
-        key_obj = APIKey.objects.filter(site_url=site_url, expires_at__gt=timezone.now()).first()
+        # Retrieve the most recent valid key
+        key_obj = APIKey.objects.filter(expires_at__gt=timezone.now()).order_by('-created_at').first()
 
         if key_obj:
-            # If the key is found and still valid, return it
             return Response({
                 'key': key_obj.key,
                 'expires_at': key_obj.expires_at.strftime('%Y-%m-%d %H:%M:%S')
             })
         else:
-            return Response({'error': 'No valid key found for the given site URL'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'No valid key found'}, status=status.HTTP_404_NOT_FOUND)
 
 
 class ValidateKeyView(APIView):
@@ -58,8 +55,6 @@ class ValidateKeyView(APIView):
             })
         else:
             return Response({'detail': 'Key expired or invalid'}, status=status.HTTP_403_FORBIDDEN)
-
-
 
 # from rest_framework.response import Response
 # from rest_framework.views import APIView

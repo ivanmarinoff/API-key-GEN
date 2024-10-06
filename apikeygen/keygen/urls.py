@@ -1,8 +1,8 @@
 from django.urls import path
-from .views import KeyView, ValidateKeyView, index
+from . import views
 
 urlpatterns = [
-    path('', index, name='index'),  # Home page for visualizing the keys
-    path('get-key/', KeyView.as_view(), name='get_key'),
-    path('validate-key/', ValidateKeyView.as_view(), name='validate_key'),
+    path('', views.index, name='index'),
+    path('api/get-key/', views.KeyView.as_view(), name='get_key'),  # Add parentheses here
+    path('api/validate-key/', views.ValidateKeyView.as_view(), name='validate_key'),  # Add parentheses here
 ]
