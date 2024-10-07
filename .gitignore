@@ -18,4 +18,4 @@
 .venv.prod
 .venv.example
 .idea
-static
+staticfiles
