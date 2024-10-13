@@ -1,5 +1,5 @@
 import uuid
-
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta, datetime
@@ -25,6 +25,15 @@ class APIKey(models.Model):
 
     def __str__(self):
         return f"APIKey({self.key} for {self.site_url or 'No Site'}, expires at {self.expires_at})"
+
+
+# class CorsSettings(models.Model):
+#     name = models.CharField(max_length=64, null=True, blank=True)
+#     cors_allowed_origins = models.CharField(max_length=255, default=settings.CORS_ALLOWED_ORIGINS, null=True, blank=True)
+#     cors_whitelist = models.CharField(max_length=255, default=settings.CORS_ORIGIN_WHITELIST, null=True, blank=True)
+#
+#     def __str__(self):
+#         return self.name
 
 # class APIKey(models.Model):
 #     key = models.CharField(max_length=64, unique=True, default=uuid.uuid4)

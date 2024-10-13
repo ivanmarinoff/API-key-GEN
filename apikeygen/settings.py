@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = 'RENDER' not in os.environ
 
-CORS_ALLOWED_ORIGINS: True
+# CORS_ALLOWED_ORIGINS: True
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(' ')
 
@@ -108,18 +108,10 @@ DATABASES = {
     }
 }
 
-CORS_ALLOWED_ORIGINS = [
-    'https://personal-wallet.onrender.com',
-    # "http://127.0.0.1:3000",
-    # "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', '').split(', ')
 
-CORS_ORIGIN_WHITELIST = (
-    # 'https://api-key-gen.onrender.com',
-    'https://personal-wallet.onrender.com',
-    # "http://127.0.0.1:3000",  # Frontend origin
-    # "http://localhost",  # Include localhost as well for local development
-)
+CORS_ORIGIN_WHITELIST = os.environ.get('CORS_ORIGIN_WHITELIST', '').split(', ')
+
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_HEADERS = (
     *default_headers,

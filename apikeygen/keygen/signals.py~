@@ -1,0 +1,16 @@
+# signals.py
+from django.db.models.signals import post_save, post_delete, post_migrate
+from django.dispatch import receiver
+from .models import APIKey, CorsSettings
+from django.conf import settings
+
+@receiver([post_save, post_delete], sender=APIKey)
+def update_cors_settings(sender, **kwargs):
+    settings.CORS_ALLOWED_ORIGINS = APIKey.objects.filter(site_url__isnull=False).values_list('site_url', flat=True)
+    settings.CORS_ORIGIN_WHITELIST = APIKey.objects.filter(site_url__isnull=False).values_list('site_url', flat=True)
+
+
+@receiver(post_migrate)
+def create_default_cors_settings(sender, **kwargs):
+    if not CorsSettings.objects.exists():
+        CorsSettings.objects.create(name='Default CORS Settings')

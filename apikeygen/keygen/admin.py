@@ -8,7 +8,7 @@ class APIKeyAdmin(admin.ModelAdmin):
     list_filter = ('created_at', 'expires_at', 'site_url')
     search_fields = ('site_url',)
     fields = ('site_url', 'key', 'created_at', 'expires_at', 'validity_duration', 'auto_set_expiration')
-    readonly_fields = ('created_at', 'key')  # Make `created_at` and `key` read-only to prevent edits
+    readonly_fields = ('created_at', 'key')  # Prevent manual edits to created_at and key
 
 
 # Customize admin panel appearance
