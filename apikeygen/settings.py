@@ -146,13 +146,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-SECURE_HSTS_SECONDS = 31536000  # Set the desired HSTS duration (e.g., 1 year)
-SECURE_HSTS_PRELOAD = True  # Optional: Enable HSTS preload
-CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_AGE = 86400  # 86400 seconds = 24 hours
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 86400  # 86400 seconds = 24 hours
-SESSION_COOKIE_HTTPONLY = True
+# SECURE_HSTS_SECONDS = 31536000  # Set the desired HSTS duration (e.g., 1 year)
+# SECURE_HSTS_PRELOAD = True  # Optional: Enable HSTS preload
+# CSRF_COOKIE_SECURE = True
+# CSRF_COOKIE_AGE = 86400  # 86400 seconds = 24 hours
+# SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# SESSION_COOKIE_AGE = 86400  # 86400 seconds = 24 hours
+# SESSION_COOKIE_HTTPONLY = True
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
